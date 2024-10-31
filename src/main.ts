@@ -191,7 +191,7 @@ export default class CanvasStyleMenuPlugin extends Plugin {
         let edgePatched = this.edgePatched;
 
         const patchMenu = () => {
-            const canvasView = this.app.workspace.getLeavesOfType("canvas").first()?.view;
+            const canvasView = this.getCanvasView();
             if (!canvasView) return false;
 
             const menu = (canvasView as CanvasView)?.canvas.menu;
@@ -377,14 +377,14 @@ export default class CanvasStyleMenuPlugin extends Plugin {
             let groupPatched: boolean = false;
             if (this.nodePatched && this.groupPatched) return;
 
-            const canvasView = this.app.workspace.getLeavesOfType("canvas").first()?.view;
+            const canvasView = this.getCanvasView();
             if (!canvasView) return false;
 
-            const canvas: Canvas = (canvasView as CanvasView)?.canvas;
+            const canvas: Canvas = canvasView.canvas;
             if (!canvas) return false;
 
-            let node = (this.app.workspace.getLeavesOfType("canvas").first()?.view as any).canvas.nodes.values().next().value;
-            const nodes = (this.app.workspace.getLeavesOfType("canvas").first()?.view as any).canvas.nodes.values();
+            const nodes = canvas.nodes.values();
+            let node = nodes.next().value;
 
             for (const group of nodes) {
                 if (group?.unknownData.type === "group") {
@@ -465,13 +465,13 @@ export default class CanvasStyleMenuPlugin extends Plugin {
 
         const patchEdge = () => {
             if (this.edgePatched) return;
-            const canvasView = this.app.workspace.getLeavesOfType("canvas").first()?.view;
+            const canvasView = this.getCanvasView();
             if (!canvasView) return false;
 
-            const canvas: Canvas = (canvasView as CanvasView)?.canvas;
+            const canvas: Canvas = canvasView.canvas;
             if (!canvas) return false;
 
-            const edge = (this.app.workspace.getLeavesOfType("canvas").first()?.view as any).canvas.edges.values().next().value;
+            const edge = canvas.edges.values().next().value;
 
             if (!edge) return false;
             let prototypeEdge = Object.getPrototypeOf(edge);
@@ -594,6 +594,11 @@ export default class CanvasStyleMenuPlugin extends Plugin {
                 this.registerEvent(evt);
             }
         });
+    }
+
+    getCanvasView(): CanvasView|undefined {
+        // The workspace might have multiple canvas leaves, and only one of them has a `canvas` property
+        return this.app.workspace.getLeavesOfType("canvas").find(leaf => leaf.view.canvas)?.view
     }
 
 }
